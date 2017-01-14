@@ -11,7 +11,27 @@
     tools:context="com.example.ken.gsapp.MainActivity">
 
     <TextView
+        android:id="@+id/text1"
+        android:gravity="center"
+        android:background="#ff0000"
+        android:layout_alignParentTop="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Hello World!" />
+    <TextView
+        android:id="@+id/text2"
+        android:gravity="center"
+        android:background="#00ff00"
+        android:layout_toEndOf="@+id/text1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello Woooooooorld!" />
+    <TextView
+        android:id="@+id/text3"
+        android:gravity="center"
+        android:background="#0000ff"
+        android:layout_toEndOf="@+id/text2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello Woooooooorld!" />
 </RelativeLayout>
