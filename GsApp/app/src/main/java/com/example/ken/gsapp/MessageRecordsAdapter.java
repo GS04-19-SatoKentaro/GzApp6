@@ -42,6 +42,7 @@ public class MessageRecordsAdapter extends ArrayAdapter<MessageRecord> {
 
         //レイアウトにある画像と文字のViewを所得します。
         //findViewById
+        //(NetworkImageView) は型変換
         NetworkImageView imageView = (NetworkImageView) convertView.findViewById(R.id.image1);
         TextView textView = (TextView) convertView.findViewById(R.id.text1);
 

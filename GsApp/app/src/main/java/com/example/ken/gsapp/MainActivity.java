@@ -50,7 +50,7 @@ public class MainActivity extends ActionBarActivity {
     private void fetch() {
         //jsonデータをサーバーから取得する通信機能です。Volleyの機能です。通信クラスのインスタンスを作成しているだけです。通信はまだしていません。
         JsonObjectRequest request = new JsonObjectRequest(
-                "http://gashfara.com/test/json.txt" ,//jsonデータが有るサーバーのURLを指定します。引数1
+                "http://schrift.sakura.ne.jp/gsapp/json.txt" ,//jsonデータが有るサーバーのURLを指定します。引数1
                 null,//引数2
                 //サーバー通信した結果、成功した時の処理をするクラスを作成しています。//引数3
                 //通信したときのハンドリングの仕方が違う
