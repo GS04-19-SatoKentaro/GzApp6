@@ -2,10 +2,13 @@
 //どのアクティビティーが起動時に実行されるのかはAndroidManifestに記述されています。
 package com.example.ken.gsapp;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -130,5 +133,24 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
     */
+
+    public class ButtonSampleActivity extends Activity {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_main);
+
+            Button button = (Button) findViewById(R.id.button);
+            // ボタンがクリックされた時に呼び出されるコールバックリスナーを登録します
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // ボタンがクリックされた時に呼び出されます
+                    finish();
+                }
+            });
+        }
+    }
+
 
 }

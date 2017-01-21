@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">GsApp</string>
+    <string name="top_button_name">Sample Button</string>
+    <string name="web_finish_button">Back to main</string>
 </resources>

@@ -7,8 +7,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 
 
 public class WebActivity extends ActionBarActivity {
@@ -18,6 +20,17 @@ public class WebActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         //レイアウトをセットします
         setContentView(R.layout.activity_web);
+
+        Button button = (Button) findViewById(R.id.webFinishbutton);
+        // ボタンがクリックされた時に呼び出されるコールバックリスナーを登録します
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // ボタンがクリックされた時に呼び出されます
+                finish();
+            }
+        });
+
 
         // Intent を取得。
         //Intentでアクティビティー間のデータを受け渡しします。Intentの値を受け取るために作成。
@@ -35,6 +48,11 @@ public class WebActivity extends ActionBarActivity {
         webView.loadUrl(url);
     }
 
+    public void onClick( View v_ )
+    {
+        // アクティビティを終了させる事により、一つ前のアクティビティへ戻る事が出来る。
+        finish();
+    }
     /*
     //デフォルトで作成されたメニューの関数です。未使用。
     @Override
