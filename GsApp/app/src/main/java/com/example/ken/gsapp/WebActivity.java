@@ -12,7 +12,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 
-
 public class WebActivity extends ActionBarActivity {
 
     @Override
@@ -48,11 +47,6 @@ public class WebActivity extends ActionBarActivity {
         webView.loadUrl(url);
     }
 
-    public void onClick( View v_ )
-    {
-        // アクティビティを終了させる事により、一つ前のアクティビティへ戻る事が出来る。
-        finish();
-    }
     /*
     //デフォルトで作成されたメニューの関数です。未使用。
     @Override

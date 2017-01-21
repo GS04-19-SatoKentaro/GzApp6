@@ -37,6 +37,16 @@ public class MainActivity extends ActionBarActivity {
         //メイン画面のレイアウトをセットしています。ListView
         setContentView(R.layout.activity_main);
 
+        Button button = (Button) findViewById(R.id.button);
+        // ボタンがクリックされた時に呼び出されるコールバックリスナーを登録します
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // ボタンがクリックされた時に呼び出されます
+                finish();
+            }
+        });
+
         //アダプターを作成します。newでクラスをインスタンス化しています。
         //MainActivityはContextの子供
         mAdapter = new MessageRecordsAdapter(this);
@@ -133,24 +143,5 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
     */
-
-    public class ButtonSampleActivity extends Activity {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setContentView(R.layout.activity_main);
-
-            Button button = (Button) findViewById(R.id.button);
-            // ボタンがクリックされた時に呼び出されるコールバックリスナーを登録します
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // ボタンがクリックされた時に呼び出されます
-                    finish();
-                }
-            });
-        }
-    }
-
 
 }
