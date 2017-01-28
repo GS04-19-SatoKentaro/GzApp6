@@ -30,7 +30,6 @@ public class WebActivity extends ActionBarActivity {
             }
         });
 
-
         // Intent を取得。
         //Intentでアクティビティー間のデータを受け渡しします。Intentの値を受け取るために作成。
         Intent intent = getIntent();
