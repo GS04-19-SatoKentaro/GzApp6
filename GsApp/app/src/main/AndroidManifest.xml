@@ -6,6 +6,8 @@
     <!-- added for KiiCloud 2017.1.28 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- added for camera function -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- インターネットを使用する許可 -->
     <application
@@ -27,7 +29,8 @@
         </activity>
         <activity android:name=".WebActivity" />
         <activity android:name=".DetailsActivity" />
-        <activity android:name=".UserActivity"></activity>
+        <activity android:name=".UserActivity" />
+        <activity android:name=".PostActivity"></activity>
     </application>
 
 </manifest>

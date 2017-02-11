@@ -6,6 +6,11 @@
         android:title="Log Out" />
     <!--Log Outはstringにすると便利？-->
     <!-- Userで追加ここまで-->
+    <!-- Postで追加ここから-->
+    <item android:id="@+id/post"
+        android:title="Post" />
+    <!-- Postで追加ここまで-->
+
     <item android:id="@+id/action_settings" android:title="@string/action_settings"
         android:orderInCategory="100" app:showAsAction="never" />
 </menu>
