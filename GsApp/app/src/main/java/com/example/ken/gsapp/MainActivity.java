@@ -18,7 +18,12 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.kii.cloud.storage.Kii;
+import com.kii.cloud.storage.KiiObject;
 import com.kii.cloud.storage.KiiUser;
+import com.kii.cloud.storage.callback.KiiQueryCallBack;
+import com.kii.cloud.storage.query.KiiQuery;
+import com.kii.cloud.storage.query.KiiQueryResult;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -82,6 +87,72 @@ public class MainActivity extends ActionBarActivity {
         fetch();
 
     }
+
+    //ListView2で追加ここから
+    //KiiCLoud対応のfetchです。
+    //自分で作った関数です。一覧のデータを作成して表示します。
+    private void fetch() {
+        //KiiCloudの検索条件を作成。検索条件は未設定。なので全件。
+        //queryは条件という意味
+        KiiQuery query = new KiiQuery();
+        //ソート条件を設定。日付の降順
+        //Descは降順
+        //_modifiedは修正
+        //_ownerはUser
+        query.sortByDesc("_created");
+        //バケットmessagesを検索する。最大200件
+        //new KiiQueryCallBack<KiiObject>〜はコールバック
+        Kii.bucket("messages")
+                .query(new KiiQueryCallBack<KiiObject>() {
+                    //検索が完了した時
+                    //resultは結果
+                    //exceptionはエラー
+                    @Override
+                    public void onQueryCompleted(int token, KiiQueryResult<KiiObject> result, Exception exception) {
+                        if (exception != null) {
+                            //エラー処理を書く
+                            //エラーメッセ時の表示灯
+                            return;
+                        }
+                        //空のMessageRecordデータの配列を作成
+                        //new ArrayList<MessageRecord>(2)とかすると2つ作る
+                        //あとで追加するためにからのやつ作成
+                        ArrayList<MessageRecord> records = new ArrayList<MessageRecord>();
+                        //検索結果をListで得る
+                        //KiiObjectはKiiCloudのオブジェクト
+                        List<KiiObject> objLists = result.getResult();
+                        //得られたListをMessageRecordに設定する
+                        // 「:」で右のリスト？の中の一つをobjに代入
+                        //_id, _created, _modified, _owner, _version, _bodyType, imageUrl, comment,
+                        for (KiiObject obj : objLists) {
+                            //_id(KiiCloudのキー)を得る。空の時は""が得られる。
+                            //nullかどうかを意識する。
+                            String id = obj.getString("_id", "");
+                            String title = obj.getString("comment", "");
+                            String url = obj.getString("imageUrl", "");
+                            //MessageRecordを新しく作ります。
+                            MessageRecord record = new MessageRecord(id, url, title);
+                            //MessageRecordの配列に追加します。
+                            records.add(record);
+                        }
+                        //データをアダプターにセットしています。これで表示されます。
+                        mAdapter.setMessageRecords(records);
+                    }
+                }, query);
+
+    }
+    //Postから戻ってくるときに画面を更新したいのでfetchを実行しています。
+    @Override
+    protected void onStart() {
+        super.onStart();
+        //一覧のデータを作成して表示します。
+        fetch();
+    }
+    //ListView2で追加ここまで
+
+
+    /*ListView2で削除ここから
+
     //自分で作った関数です。一覧のデータを作成して表示します。
     private void fetch() {
         //jsonデータをサーバーから取得する通信機能です。Volleyの機能です。通信クラスのインスタンスを作成しているだけです。通信はまだしていません。
@@ -141,6 +212,9 @@ public class MainActivity extends ActionBarActivity {
 
         return records;
     }
+
+    ListView2で削除ここまで*/
+
 
     //デフォルトで作成されたメニューの関数です。未使用。
 
