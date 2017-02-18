@@ -11,10 +11,14 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.NetworkImageView;
+import com.kii.cloud.storage.KiiObject;
+import com.kii.cloud.storage.callback.KiiObjectCallBack;
 
 import java.util.List;
 
@@ -38,8 +42,10 @@ public class MessageRecordsAdapter extends ArrayAdapter<MessageRecord> {
     }
     //表示するViewを返します。これがListVewの１つのセルとして表示されます。表示されるたびに実行されます。
     //ViewGroupはあまり使わない、
+    //positionは非同期、finalで固定する?書きあたりをgetViewの外に書くような書き方もある
+    //                MessageRecord messageRecord = getItem(position);
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         //convertViewをチェックし、Viewがないときは新しくViewを作成します。convertViewがセットされている時は未使用なのでそのまま再利用します。メモリーに優しい。
         if(convertView == null) {
             convertView = LayoutInflater.from(getContext()).inflate(R.layout.message_item, parent, false);
@@ -109,6 +115,69 @@ public class MessageRecordsAdapter extends ArrayAdapter<MessageRecord> {
         imageView.setImageUrl(imageRecord.getImageUrl(), mImageLoader);
         //Viewに文字をセットします。
         textView.setText(imageRecord.getComment());
+
+        //Goodで追加ここから　
+        //いいねボタンを得る
+        Button buttonView = (Button) convertView.findViewById(R.id.button1);
+        //ボタンの文字にいいねの数を追加します。
+        buttonView.setText(getContext().getString(R.string.good)+":"+imageRecord.getGoodCount());
+
+        //ボタンを押した時のクリックイベントを定義
+        buttonView.setOnClickListener(new View.OnClickListener() {
+            //クリックした時
+            @Override
+            public void onClick(View view) {
+                //いいねボタンを得る
+                Button buttonView = (Button) view;
+                ////タグからどの位置のボタンかを得る
+                //int position = (Integer)buttonView.getTag();
+                //MessageRecordsAdapterの位置からMessageRecordのデータを得る
+                //positionは表示した時の番号
+                //getItemはArrayAdapter自体の命令
+                //押された位置が知りたい
+                MessageRecord messageRecord = getItem(position);
+                //messagesのバケット名と_idの値からKiiObjectのuri(データの場所)を得る。参考：http://documentation.kii.com/ja/starts/cloudsdk/cloudoverview/idanduri/
+                //更新するためのURI
+                Uri objUri = Uri.parse("kiicloud://buckets/" + "messages" + "/objects/" + messageRecord.getId());
+                //uriから空のデータを作成
+                //通信する準備
+                KiiObject object = KiiObject.createByUri(objUri);
+                //いいねを＋１する。
+                //ここではmessageRecordのgetGoodCountは更新しない、通信が成功するまで保留
+                //データを更新、"goodCount"でカラムを指定、変更したいものだけ指定、このあと通信して
+                object.set("goodCount", messageRecord.getGoodCount()+ 1);
+                //既存の他のデータ(_id,comment,imageUrlなど)はそのままに、goodCountだけが更新される。参考：http://documentation.kii.com/ja/guides/android/managing-data/object-storages/updating/#full_update
+                //通信してKiiCloudに保存
+                //成功したらメモリー上のmessageRecordのgetGoodCountを更新しないとエラー時に整合性が取れない
+                object.save(new KiiObjectCallBack() {
+                    //KiiCloudの更新が完了した時
+                    @Override
+                    public void onSaveCompleted(int token, KiiObject object, Exception exception) {
+                        if (exception != null) {
+                            //エラーの時
+                            return;
+                        }
+                        //通信が成功した時、以下を実行
+                        //MessageRecordsAdapterの位置からMessageRecordのデータを得る
+                        //ちょっと前にも同じコードがあるので、本当はグローバル変数に入れていてもいいかも？
+                        MessageRecord messageRecord =  getItem(position);
+                        //messageRecordのいいねの数を+1する。これでKiiCloudの値とListViewのデータが一致する。
+                        messageRecord.setGoodCount(messageRecord.getGoodCount()+1);
+                        //データの変更を通知します。
+                        //ArrayAdapterのメソッド、変更があった部分をリドロー
+                        notifyDataSetChanged();
+                        //トーストを表示.Activityのコンテキストが必要なのでgetContext()してる。
+                        //ダイアログだと押さないと消えない
+                        //最近はポップアップ？
+                        Toast.makeText(getContext(), getContext().getString(R.string.good_done), Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+            }
+        });
+        //Goodで追加ここまで
+
+
         //1つのセルのViewを返します。
         return convertView;
     }

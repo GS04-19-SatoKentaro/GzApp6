@@ -20,12 +20,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-<<<<<<< HEAD
     <Button android:id="@+id/button_2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/foot_button_name" />
 
-=======
->>>>>>> ListView2
 </RelativeLayout>
