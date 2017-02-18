@@ -8,6 +8,7 @@
     <!-- 個人で追加したもの -->
     <string name="top_button_name">Quit app</string>
     <string name="web_finish_button">Back to main</string>
+    <string name="foot_button_name">Quit app 2</string>
 
     <!-- Userで追加ここから-->
     <string name="enter_username">Enter username (3-64 length)</string>
