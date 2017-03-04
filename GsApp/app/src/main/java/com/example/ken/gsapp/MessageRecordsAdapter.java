@@ -19,7 +19,9 @@ import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.NetworkImageView;
 import com.kii.cloud.storage.KiiObject;
 import com.kii.cloud.storage.callback.KiiObjectCallBack;
+import com.kii.cloud.storage.exception.app.AppException;
 
+import java.io.IOException;
 import java.util.List;
 
 //<MessageRecord>はデータクラスMessageRecordのArrayAdapterであることを示している。このアダプターで管理したいデータクラスを記述されば良い。
@@ -109,7 +111,7 @@ public class MessageRecordsAdapter extends ArrayAdapter<MessageRecord> {
         //getItemはもともとArrayAdapterが持っているメソッド
         MessageRecord imageRecord = getItem(position);
 
-        //mImageLoaderを使って画像をダウンロードし、Viewにセットします。
+        //imageLoaderを使って画像をダウンロードし、Viewにセットします。
         //非同期なので、ダウンロードに時間が掛かる場合もある→ローディング表示機能の実装
         //setImageUrlはimageViewのメソッド
         imageView.setImageUrl(imageRecord.getImageUrl(), mImageLoader);
@@ -177,6 +179,59 @@ public class MessageRecordsAdapter extends ArrayAdapter<MessageRecord> {
         });
         //Goodで追加ここまで
 
+        //deleteボタンの処理ここから
+        Button buttonView_delete = (Button) convertView.findViewById(R.id.button_delete);
+
+        //ボタンを押した時のクリックイベントを定義
+        buttonView_delete.setOnClickListener(new View.OnClickListener() {
+            //クリックした時
+            @Override
+            public void onClick(View view) {
+                //削除ボタンを得る
+                Button buttonView_delete = (Button) view;
+                //Toast.makeText(getContext(), "削除ボタンが押されました。", Toast.LENGTH_SHORT).show();
+
+                ////タグからどの位置のボタンかを得る
+                //int position = (Integer)buttonView_delete.getTag();
+                //MessageRecordsAdapterの位置からMessageRecordのデータを得る
+                //positionは表示した時の番号
+                //getItemはArrayAdapter自体の命令
+                //押された位置が知りたい
+                MessageRecord messageRecord = getItem(position);
+                //messagesのバケット名と_idの値からKiiObjectのuri(データの場所)を得る。参考：http://documentation.kii.com/ja/starts/cloudsdk/cloudoverview/idanduri/
+                //更新するためのURI
+                Uri objUri = Uri.parse("kiicloud://buckets/" + "messages" + "/objects/" + messageRecord.getId());
+                //uriから空のデータを作成
+                String messageIDStringToCheck = messageRecord.getId();
+                //Toast.makeText(getContext(), messageIDStringToCheck, Toast.LENGTH_SHORT).show();
+
+                //通信する準備
+                KiiObject object = KiiObject.createByUri(objUri);
+
+                //データを消去
+
+                object.delete(new KiiObjectCallBack() {
+                    @Override
+                    public void onDeleteCompleted(int token, Exception exception) {
+                        if (exception != null) {
+                            Toast.makeText(getContext(), getContext().getString(R.string.delete_failed), Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        MessageRecord messageRecord =  getItem(position);
+
+                        remove(messageRecord);
+
+                        //ArrayAdapterのメソッド、変更があった部分をリドロー
+                        notifyDataSetChanged();
+
+                        Toast.makeText(getContext(), getContext().getString(R.string.delete_done), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+
+        //deleteボタンの処理ここまで
 
         //1つのセルのViewを返します。
         return convertView;

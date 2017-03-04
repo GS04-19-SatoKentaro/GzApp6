@@ -11,21 +11,46 @@
         android:layout_height="100dp"
         android:scaleType="centerCrop" />
 
-    <TextView
-        android:id="@+id/text1"
-        android:layout_width="0dp"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:autoLink="web"
-        android:textAppearance="?android:textAppearanceLarge"
-        tools:text="comment" />
+        android:orientation="vertical">
 
-    <!-- Goodで追加ここから-->
-    <Button
-        android:id="@+id/button1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/good" />
-    <!-- Goodで追加ここまで-->
+        <TextView
+            android:id="@+id/text1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:autoLink="web"
+            android:textAppearance="?android:textAppearanceLarge"
+            tools:text="comment" />
 
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="horizontal"
+            android:paddingBottom="0dp">
+
+            <!-- Goodで追加ここから-->
+            <Button
+                android:id="@+id/button1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/good"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true" />
+            <!-- Goodで追加ここまで-->
+
+            <Button
+                android:id="@+id/button_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/delete"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true" />
+
+        </RelativeLayout>
+    </LinearLayout>
 </LinearLayout>
