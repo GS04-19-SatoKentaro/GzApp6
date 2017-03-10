@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- added for camera function -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- google analytics -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- インターネットを使用する許可 -->
     <application
@@ -31,6 +33,18 @@
         <activity android:name=".DetailsActivity" />
         <activity android:name=".UserActivity" />
         <activity android:name=".PostActivity"></activity>
+
+        <!--GrowthHack(ABテスト)で追加ここから-->
+        <service android:name = "com.kii.cloud.analytics.EventUploadService" />
+        <!--GrowthHack(ABテスト)で追加ここまで-->
+
+
+        <!-- google analytics -->
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version"/>
+
+
     </application>
 
 </manifest>

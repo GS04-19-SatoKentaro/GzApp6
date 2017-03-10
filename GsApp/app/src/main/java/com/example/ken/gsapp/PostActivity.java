@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -24,6 +25,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+import com.kii.cloud.abtesting.KiiExperiment;
+import com.kii.cloud.abtesting.Variation;
+import com.kii.cloud.analytics.KiiEvent;
 import com.kii.cloud.storage.Kii;
 import com.kii.cloud.storage.KiiBucket;
 import com.kii.cloud.storage.KiiObject;
@@ -34,8 +40,12 @@ import com.kii.cloud.storage.resumabletransfer.KiiRTransfer;
 import com.kii.cloud.storage.resumabletransfer.KiiRTransferCallback;
 import com.kii.cloud.storage.resumabletransfer.KiiUploader;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 
 public class PostActivity extends ActionBarActivity {
@@ -50,6 +60,7 @@ public class PostActivity extends ActionBarActivity {
     private String comment;
     //カメラで撮影した画像のuri
     private Uri mImageUri;
+    KiiExperiment experiment = null;//GrowthHack(ABテスト)修正。ABテストクラス。
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,12 +93,13 @@ public class PostActivity extends ActionBarActivity {
                 onPostButtonClicked(v);
             }
         });
+        new ABTestInfoFetchTask().execute();//GrowthHack(ABテスト)修正。ABテスト環境を非同期で設定する。
 
         //Android6ではPermissonをプログラムで許可してあげないと実行時にSecurityExceptionエラーになる。
         //参考：http://qiita.com/kazhida/items/12ab5ce655e7c5a463ff
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
                 PackageManager.PERMISSION_GRANTED) {
-            String[] permissions = new String[] {
+            String[] permissions = new String[]{
                     Manifest.permission.WRITE_EXTERNAL_STORAGE
             };
             ActivityCompat.requestPermissions(this, permissions, 1);
@@ -96,7 +108,7 @@ public class PostActivity extends ActionBarActivity {
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) !=
                 PackageManager.PERMISSION_GRANTED) {
-            String[] permissions = new String[] {
+            String[] permissions = new String[]{
                     Manifest.permission.CAMERA
             };
             ActivityCompat.requestPermissions(this, permissions, 1);
@@ -104,6 +116,105 @@ public class PostActivity extends ActionBarActivity {
             //  許諾されているので、やりたいことをする
         }
     }
+
+    //GrowthHack(ABテスト)追加ここから
+    //AsyncTaskを使って非同期でABテストの情報を取得し、画面に反映する。参考：http://gihyo.jp/dev/serial/01/mbaas/0013
+    public class ABTestInfoFetchTask extends AsyncTask<Void, Void, KiiExperiment> {
+        //非同期の処理。returnでイベントにいろいろな値をわたせる
+        @Override
+        protected KiiExperiment doInBackground(Void... params) {
+            try {
+                //ABテストのIDを通知。自分のIDに変更してください。
+                experiment = KiiExperiment.getByID("7ecd9aa0-008a-11e7-b363-22000a7f900d");
+            } catch (Exception e) {
+                Log.d("A/B test failed.", e.getLocalizedMessage());
+            }
+            return experiment;
+        }
+
+        //doInBackgroundが実行された後に自動的に実行される。
+        @Override
+        protected void onPostExecute(KiiExperiment experiment) {
+            Variation va;//ABテストの結果のクラス
+            String postText = "post";//表示する文字。
+            try {
+                //ABテストのテスト結果(AまたはBの情報)を得る。ユーザごとに固定。Aの結果をもらったらずっとA。
+                va = experiment.getAppliedVariation();
+            } catch (Exception e) {
+                Log.d("A/B experiment failed.", e.getLocalizedMessage());
+                //エラーの時はAの情報を利用する。
+                va = experiment.getVariationByName("A");
+            }
+            //結果のJSONデータを得る。
+            JSONObject test = va.getVariableSet();
+            try {
+                //ABテストで設定したpostTextの値を得る。postかsend
+                postText = test.getString("postText");
+                Log.d("A/B Get postText", postText);
+            } catch (JSONException e) {
+            }
+            //postボタンを探す
+            Button buttonView = (Button) findViewById(R.id.post_button);
+            //ABテストの文字をセット
+            buttonView.setText(postText);
+            //ABテストの表示のイベントを送る。eventViewedに集計される。
+            new SendABTestEventTask("eventViewed").execute();
+        }
+    }
+
+    //ABテストのイベントを非同期で送信するクラス
+    private class SendABTestEventTask extends AsyncTask<Void, Void, Boolean> {
+
+        private String eventName;
+        private KiiEvent event = null;
+
+        private SendABTestEventTask(String eventName) {
+            this.eventName = eventName;
+            try {
+                //ABテストのクラスがあれば、イベント名を送信
+                if (experiment != null) {
+                    Variation variation = experiment.getAppliedVariation();
+                    event = variation
+                            .eventForConversion(getApplicationContext(), eventName);
+                    Log.d("A/B eventname Send", eventName);
+                }
+            } catch (Exception e) {
+                // eventがセットされない(null)であることを失敗とみなす。
+                Log.d("A/B eventname Send NG", eventName);
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            if (event == null) {
+                return false;
+            }
+            try {
+                //送信
+                event.push();
+                Log.d("A/B TestEvent Send", eventName);
+                return true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        //送信後の結果
+        @Override
+        protected void onPostExecute(Boolean result) {
+            // 成功失敗によらず、ログ出力のみで結果をユーザに通知はしない。
+            if (result) {
+                Log.d("A/B　send ok", eventName);
+            } else {
+                Log.d("A/B　send ng", eventName);
+            }
+        }
+    }
+    //GrowthHack(ABテスト)追加ここまで
+
+
     //画像の添付ボタンをおした時の処理
     public void onAttachFileButtonClicked(View v) {
         //ギャラリーを開くインテントを作成して起動する。
@@ -117,6 +228,7 @@ public class PostActivity extends ActionBarActivity {
         //
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), IMAGE_CHOOSER_RESULTCODE);
     }
+
     //カメラの添付ボタンをおした時の処理
     public void onAttachCameraFileButtonClicked(View v) {
         //カメラは機種依存が大きく、いろいろサンプルを見たほうが良い
@@ -144,13 +256,14 @@ public class PostActivity extends ActionBarActivity {
         //インテント起動 これがカメラ
         startActivityForResult(intent, IMAGE_CHOOSER_RESULTCODE);
     }
+
     //画像を選択した後に実行されるコールバック関数。インテントの実行された後にコールバックされる。自動的に実行されます。
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         //他のインテントの実行結果と区別するためstartActivityで指定した定数IMAGE_CHOOSER_RESULTCODEと一致するか確認
         if (requestCode == IMAGE_CHOOSER_RESULTCODE) {
             //失敗の時
-            if (resultCode != RESULT_OK ) {
+            if (resultCode != RESULT_OK) {
                 //ここでエラーメッセージ出してもい
                 return;
             }
@@ -158,13 +271,13 @@ public class PostActivity extends ActionBarActivity {
             //画像を取得する。Xperiaの場合はdataに画像が入っている。それ以外はintentで設定したmImageUriに入っている。
             //機種依存対策
             Uri result;
-            if(data != null) {
+            if (data != null) {
                 //ギャラリーの時
                 result = data.getData();
-            }else {
+            } else {
                 //カメラの時だけ（Xperia対応）
                 result = mImageUri;
-                Log.d("mogi:mImageUri:",result.toString());
+                Log.d("mogi:mImageUri:", result.toString());
             }
             //画面に画像を表示
             ImageView iv = (ImageView) findViewById(R.id.image_view1);
@@ -176,6 +289,7 @@ public class PostActivity extends ActionBarActivity {
 
         }
     }
+
     //uriからファイルのパスを取得する。バージョンによって処理が違う。KiiCloudのチュートリアルから取り込んだ。汎用的に使えます。
     //機種依存対策？：メモリーの画像を一時ファイルに保存して処理。
     private String getFilePathByUri(Uri selectedFileUri) {
@@ -226,7 +340,7 @@ public class PostActivity extends ActionBarActivity {
             return filePath;
         } else {
             //データから探す
-            String[] filePathColumn = { MediaStore.MediaColumns.DATA };
+            String[] filePathColumn = {MediaStore.MediaColumns.DATA};
             Cursor cursor = this.getContentResolver().query(
                     selectedFileUri, filePathColumn, null, null, null);
 
@@ -265,11 +379,18 @@ public class PostActivity extends ActionBarActivity {
         if (mImagePath != null) {
             //ファイルをUP、完了した時にpostMessagesを実行している。
             uploadFile(mImagePath);
-        }else {
+        } else {
             //画像がないときはcommentだけ登録
             postMessages(null);
         }
+
+        //GrowthHack(ABテスト)追加ここから
+        //ABテストのクリックのイベントを送る。eventClickedに集計される。
+        new SendABTestEventTask("eventClicked").execute();
+        //GrowthHack(ABテスト)追加ここまで
+
     }
+
     //投稿処理。画像のUploadがうまくいったときは、urlに公開のURLがセットされる
     public void postMessages(String url) {
         //バケット名を設定。バケット＝DBのテーブルみたいなもの。Excelのシートみたいなもの。
@@ -279,7 +400,7 @@ public class PostActivity extends ActionBarActivity {
         //追加してい時はここら辺で追加できる。
         object.set("comment", comment);
         //画像があるときだけセット
-        if(url != null) {
+        if (url != null) {
             object.set("imageUrl", url);
         }
         //データをKiiCloudに保存//これも非同期
@@ -306,6 +427,7 @@ public class PostActivity extends ActionBarActivity {
             }
         });
     }
+
     //画像をKiiCloudのimagesにUPする。参考：チュートリアル、http://www.riaxdnp.jp/?p=6775
     private void uploadFile(String path) {
         //イメージを保存するバケット名を設定。すべてここに保存してmessageにはそのhttpパスを設定する。バケット＝DBのテーブルみたいなもの。Excelのシートみたいなもの。
@@ -357,11 +479,23 @@ public class PostActivity extends ActionBarActivity {
             }
         });
     }
+
     //エラーダイアログを表示する
     void showAlert(String message) {
         DialogFragment newFragment = AlertDialogFragment.newInstance(R.string.operation_failed, message, null);
         newFragment.show(getFragmentManager(), "dialog");
     }
+
+    //GrowthHackで追加ここから
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Tracker t = ((VolleyApplication) getApplication()).getTracker(VolleyApplication.TrackerName.APP_TRACKER);
+        t.setScreenName(this.getClass().getSimpleName());
+        t.send(new HitBuilders.AppViewBuilder().build());
+    }
+    //GrowthHackで追加ここまで
+
 
 /*
     @Override

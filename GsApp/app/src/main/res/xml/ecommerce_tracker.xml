@@ -1,0 +1,6 @@
+<resources>
+              <!-- 60分内にアクセスで同一人物と判定 -->
+              <integer name="ga_sessionTimeout">60</integer>
+              <!-- 自分のトラッキングIDに設定-->
+              <string name="ga_trackingId">UA-93018953-1</string>
+</resources>

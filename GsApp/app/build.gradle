@@ -35,6 +35,8 @@ dependencies {
     compile project(':modules:volley')
     //added for KiiCloud
     compile 'com.example.library:android-cloud-sdk-v2.4.14@aar'
-    compile 'com.squareup.okhttp:okhttp:2.7.2'  //
+    compile 'com.squareup.okhttp:okhttp:2.7.2'
+    //
     compile 'com.squareup.okhttp:okhttp-apache:2.7.2'
+    compile 'com.google.android.gms:play-services:10.0.1'
 }
